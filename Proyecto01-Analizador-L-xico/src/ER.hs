@@ -1,12 +1,8 @@
 module ER where
 
 -- Abstracción de Expresiones Regulares
-data Expr
-  = Term Char          -- símbolo terminal
-  | And Expr Expr      -- concatenación
-  | Or Expr Expr       -- unión
-  | Kleene Expr        -- ciExprre de Kleene
-  deriving (Eq)
+data Expr = Term Char | Or Expr Expr | And Expr Expr | Kleene Expr | Range Char Char
+
 
 instance Show Expr where
   show (Term c)   = [c]
