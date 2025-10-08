@@ -2,6 +2,7 @@ module Main where
 
 import ER
 import AFNEp
+import AFN
 
 -- Ejemplo de expresiones regulares:
 -- 1. (a+b)*c  → cualquier secuencia de a's y b's seguida de una c
@@ -14,27 +15,36 @@ main = do
     
     -- Ejemplo 1: (a+b)*c
     let expr1 = And (Kleene (Or (Term 'a') (Term 'b'))) (Term 'c')
-    let (afn1, _) = expr_to_AFNEp expr1 0
+    let (afnEps1, _) = expr_to_AFNEp expr1 0
+    let afn1 = afnEp_to_AFN afnEps1
     putStrLn "\nExpresion regular: (a+b)*c"
     print expr1
     putStrLn "\nAFNε resultante:"
-    printAFNEp afn1
+    printAFNEp afnEps1
+    putStrLn "\n AFN (sin ε):"
+    printAFN afn1
 
     -- Ejemplo 2: [a-z]
     let expr2 = Range 'a' 'z'
-    let (afn2, _) = expr_to_AFNEp expr2 0
+    let (afnEps2, _) = expr_to_AFNEp expr2 0
+    let afn2 = afnEp_to_AFN afnEps2
     putStrLn "\nExpresion regular: [a-z]"
     print expr2
     putStrLn "\nAFNε resultante:"
-    printAFNEp afn2
+    printAFNEp afnEps2
+    putStrLn "\n AFN (sin ε):"
+    printAFN afn2
 
     -- Ejemplo 3: a(b|c)
     let expr3 = And (Term 'a') (Or (Term 'b') (Term 'c'))
-    let (afn3, _) = expr_to_AFNEp expr3 0
+    let (afnEps3, _) = expr_to_AFNEp expr3 0
+    let afn3 = afnEp_to_AFN afnEps3
     putStrLn "\nExpresion regular: a(b|c)"
     print expr3
     putStrLn "\nAFNε resultante:"
-    printAFNEp afn3
+    printAFNEp afnEps3
+    putStrLn "\n AFN (sin ε):"
+    printAFN afn3
 
 -- Función auxiliar para imprimir bonito el AFNε
 printAFNEp :: AFNEp -> IO ()
@@ -48,3 +58,15 @@ printAFNEp m = do
   where
     printTrans (q, Nothing, qs) = putStrLn $ "  " ++ q ++ " --ε--> " ++ show qs
     printTrans (q, Just c, qs)  = putStrLn $ "  " ++ q ++ " --" ++ [c] ++ "--> " ++ show qs
+
+printAFN :: AFN -> IO ()
+printAFN m = do
+    putStrLn $ "Estados: " ++ show (estadosN m)
+    putStrLn $ "Alfabeto: " ++ show (alfabetoN m)
+    putStrLn "Transiciones:"
+    mapM_ printTrans (transicionesN m)
+    putStrLn $ "Estado inicial: " ++ inicialN m
+    putStrLn $ "Estados finales: " ++ show (finalesN m)
+  where
+    printTrans (q, c, qs) = putStrLn $ "  " ++ q ++ " --" ++ [c] ++ "--> " ++ show qs
+
