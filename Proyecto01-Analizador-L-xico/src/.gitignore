@@ -1,0 +1,43 @@
+# Compilación de GHC
+*.hi
+*.o
+*.dyn_hi
+*.dyn_o
+
+# Binarios ejecutables
+Main
+*.exe
+
+# Archivos de profiling y debugging
+*.prof
+*.aux
+*.hp
+*.eventlog
+
+# Archivos generados por GHCi
+.hi
+.o
+.ghci_history
+
+# Directorios de compilación
+/dist
+/dist-*
+/.tmp
+/.stack-work
+/dist-newstyle
+
+# Archivos de Stack y Cabal
+.stack-work/
+cabal.project.local
+cabal.project.local~
+
+# Archivos de editores
+*.swp
+*.swo
+*.bak
+*~
+*.tmp
+
+# VSCode / JetBrains / otros IDEs
+.vscode/
+.idea/
