@@ -1,0 +1,40 @@
+name:               Proyecto01-Analizador-L-xico
+version:            0.1.0.0
+language:           Haskell2010
+
+# Dependencias comunes para todo
+dependencies:
+  - base       >= 4.14 && < 5
+  - containers
+
+library:
+  source-dirs: src
+  exposed-modules:
+    - ER
+    - AFNEp
+    - AFN
+    - AFD
+    - AFDmin
+    - MDD
+    - Lexer
+    - Gramatica
+
+executables:
+  Proyecto01-Analizador-L-xico:
+    main: Main.hs
+    source-dirs: main
+    dependencies:
+      - Proyecto01-Analizador-L-xico
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+
+tests:
+  Tests:
+    main: Test.hs
+    source-dirs: test
+    dependencies:
+      - base
+      - containers
+      - Proyecto01-Analizador-L-xico

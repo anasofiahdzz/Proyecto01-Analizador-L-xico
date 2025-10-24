@@ -1,0 +1,14 @@
+? /home/victormendiola/.stack/programs/x86_64-linux/ghc-tinfo6-9.6.6/lib/ghc-9.6.6/lib/x86_64-linux-ghc-9.6.6/rts-1.0.2/include/ghcversion.h
+: hash: 9032f6afc97dcddfe8c8b306639eb6f456e3f6667f3dd8268681f51bb77c8634
+? /home/victormendiola/Vídeos/Proyecto01-Analizador-L-xico/.stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.6/build/Tests/autogen/Paths_Proyecto01_Analizador_L_xico.hs
+: hash: 6fd967838d30072f83ec22178c64375ab86ac706c14d447a82001614ccfdf24c
+? /home/victormendiola/Vídeos/Proyecto01-Analizador-L-xico/.stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.6/build/Tests/autogen/cabal_macros.h
+: hash: 0947577f50539971e42a720463b72f4cd17e2e6d592d8bf38b21fb39dbf90919
+/home/victormendiola/Vídeos/Proyecto01-Analizador-L-xico/Proyecto01-Analizador-L-xico.cabal:
+  hash: 520c4670d8891502227818f902ca7cc0379fff4ab74fc39fc85450113b86d123
+/home/victormendiola/Vídeos/Proyecto01-Analizador-L-xico/package.yaml:
+  hash: 5dc1d5363b037f2f485923d46f86c952ed7b0177f1b6bf108397d3673781aa54
+/home/victormendiola/Vídeos/Proyecto01-Analizador-L-xico/test/Test.hs:
+  hash: d8b2f4ce77ff5cfb40984d91fa9e3862deb06496db5d6da167a3c80731519219
+/usr/include/stdc-predef.h:
+  hash: 8db4f65e62cade8ae4d9b77960ee6aee093255acc1b637e3fb37d79179733b15

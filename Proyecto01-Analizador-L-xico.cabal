@@ -1,0 +1,54 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.36.1.
+--
+-- see: https://github.com/sol/hpack
+
+name:           Proyecto01-Analizador-L-xico
+version:        0.1.0.0
+build-type:     Simple
+
+library
+  exposed-modules:
+      ER
+      AFNEp
+      AFN
+      AFD
+      AFDmin
+      MDD
+      Lexer
+      Gramatica
+  other-modules:
+      Paths_Proyecto01_Analizador_L_xico
+  hs-source-dirs:
+      src
+  build-depends:
+      base >=4.14 && <5
+    , containers
+  default-language: Haskell2010
+
+executable Proyecto01-Analizador-L-xico
+  main-is: Main.hs
+  other-modules:
+      Paths_Proyecto01_Analizador_L_xico
+  hs-source-dirs:
+      main
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      Proyecto01-Analizador-L-xico
+    , base >=4.14 && <5
+    , containers
+  default-language: Haskell2010
+
+test-suite Tests
+  type: exitcode-stdio-1.0
+  main-is: Test.hs
+  other-modules:
+      Paths_Proyecto01_Analizador_L_xico
+  hs-source-dirs:
+      test
+  build-depends:
+      Proyecto01-Analizador-L-xico
+    , base
+    , containers
+  default-language: Haskell2010

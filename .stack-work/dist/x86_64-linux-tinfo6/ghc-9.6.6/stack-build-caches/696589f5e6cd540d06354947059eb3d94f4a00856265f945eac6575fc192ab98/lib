@@ -1,0 +1,28 @@
+? /home/victormendiola/.stack/programs/x86_64-linux/ghc-tinfo6-9.6.6/lib/ghc-9.6.6/lib/x86_64-linux-ghc-9.6.6/rts-1.0.2/include/ghcversion.h
+: hash: 9032f6afc97dcddfe8c8b306639eb6f456e3f6667f3dd8268681f51bb77c8634
+? /home/victormendiola/Vídeos/Proyecto01-Analizador-L-xico/.stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.6/build/autogen/Paths_Proyecto01_Analizador_L_xico.hs
+: hash: f360bc2aa75c24015d59b26e42c0c80b4a423f6659291b47c20bb7da210a1486
+? /home/victormendiola/Vídeos/Proyecto01-Analizador-L-xico/.stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.6/build/autogen/cabal_macros.h
+: hash: 67ae925cd59cfd9d01a7e6ab99abb4cafa856765b98106bce959d9b587ea8f53
+/home/victormendiola/Vídeos/Proyecto01-Analizador-L-xico/Proyecto01-Analizador-L-xico.cabal:
+  hash: 520c4670d8891502227818f902ca7cc0379fff4ab74fc39fc85450113b86d123
+/home/victormendiola/Vídeos/Proyecto01-Analizador-L-xico/package.yaml:
+  hash: 5dc1d5363b037f2f485923d46f86c952ed7b0177f1b6bf108397d3673781aa54
+/home/victormendiola/Vídeos/Proyecto01-Analizador-L-xico/src/AFD.hs:
+  hash: 78a2d557159c9a040e3db673a162fe5be720e95a86480a0e9461b09768ca36aa
+/home/victormendiola/Vídeos/Proyecto01-Analizador-L-xico/src/AFDmin.hs:
+  hash: 7d94226b0699ae635b2153b717897297e5c94f771b36b9a5a14b8449952f8b7d
+/home/victormendiola/Vídeos/Proyecto01-Analizador-L-xico/src/AFN.hs:
+  hash: 5f5d9b2a71fe106fa5153b36ffae1764d7499d08715558043f123fe87756ee0c
+/home/victormendiola/Vídeos/Proyecto01-Analizador-L-xico/src/AFNEp.hs:
+  hash: 3056bf45ca511b43bfbcd9ba008a71fbb02a2b1b4d855754e2f9982a52b3edc9
+/home/victormendiola/Vídeos/Proyecto01-Analizador-L-xico/src/ER.hs:
+  hash: c57a09bd657da8b81a918927c913dfafaa9de713a4c2cb7d0c93142a8b87583a
+/home/victormendiola/Vídeos/Proyecto01-Analizador-L-xico/src/Gramatica.hs:
+  hash: 30a80cdae26ccbac0d39af9152cf79dd1160d19c0456df5b353682fd9829aa46
+/home/victormendiola/Vídeos/Proyecto01-Analizador-L-xico/src/Lexer.hs:
+  hash: 6ab03009c03671664c9dbc734442871482ee5bf782580cf74203dffbcad982ec
+/home/victormendiola/Vídeos/Proyecto01-Analizador-L-xico/src/MDD.hs:
+  hash: 215cfe0d5a2b23550e06a80f8e30c99a7265573b53837263ae51f96bad450419
+/usr/include/stdc-predef.h:
+  hash: 8db4f65e62cade8ae4d9b77960ee6aee093255acc1b637e3fb37d79179733b15
