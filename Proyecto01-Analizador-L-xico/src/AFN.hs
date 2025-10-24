@@ -1,68 +1,116 @@
-module AFN where
-import Data.Set (toList, fromList)
-import ER          
+-- >>>>> Definición de AFN y la función para pasar de AFNepsilon --> AFN <<<<<
+module AFN (AFN(..), Trans_afn, aFNEp_to_AFN) where
+
+-- Se importa la definición de AFNEp.
 import AFNEp
+-- Importamos nub para eliminar duplicados
+import Data.List (nub)
+import qualified Data.Set as S
 
--- Transición no determinista (SIN epsilon)
-type Trans_afn = (String, Char, [String]) -- (estadoDeOrigen, simboloLeido, listaDeEstadosDestino)
 
--- Definición de Automata no determinista (SIN epsilon)
-data AFN = AFN{ estadosN ::[String], alfabetoN :: [Char],
-                transicionesN :: [Trans_afn],
-                inicialN :: String, finalesN :: [String]-- Estados que eClosure contiene al final del AFNε
-  } deriving (Show)
---Nos aseguraramos de que ningun estado se repita en las listas,aqui se eliminan los estados repetidos y se ordenan
-rmDup :: (Ord a) => [a] -> [a]
-rmDup = toList . fromList --fromList quita duplicados al convertir la lista en un Set
-                         --toList vuelve a convertir el Set en lista
---Calculamos las e-closures de un estado q1
-eclosure :: [Trans_eps] -> AFNEp -> String -> [String]
-eclosure transiciones m q1 = rmDup (q1 : eclosure2 m epsNext) --toma q1, busca adónde llega por epsilon y repite el proceso
+-- Definición de una transición con un símbolo.
+-- Estado origen -> Símbolo -> Lista de estados destino
+type Trans_afn = (Estado, Char, [Estado]) -- (estadoDeOrigen, simboloLeido, listaDeEstadosDestino)
+
+
+-- Definición de Autómata no determinista
+data AFN = AFN {
+    estados2 ::[Estado], -- Lista de todos los estados.
+    alfabeto2 :: [Char], -- Alfabeto que acepta el autómata.
+    transiciones2 :: [Trans_afn], -- Reglas de transición.
+    inicial2 :: Estado, -- Estado inicial.
+    finales2 :: [Estado]-- Estados finales.
+  } deriving (Eq)
+  
+-- Show personalizado, para poder imprimir mejor nuestra autómata.
+instance Show AFN where
+  show m =
+    unlines
+      [ "AFN {"
+      , "  estados      = " ++ show (estados2 m)
+      , "  alfabeto     = " ++ show (alfabeto2 m)
+      , "  transiciones = " ++ show (transiciones2 m)
+      , "  inicial      = " ++ show (inicial2 m)
+      , "  finales      = " ++ show (finales2 m)
+      , "}"
+      ]
+
+-- ========== Lógica para pasar de AFNEp a AFN ========== 
+
+eclosure :: AFNEp -> Estado -> [Estado]
+eclosure m q =
+    -- S.toList convierte el Set final de estados en una lista
+    S.toList (go [q] S.empty)
   where
-    --es la lista de estados a los que llegamos por epsilon desde q1.
-    epsNext = concat [ destino | (p, Nothing, destino) <- transiciones, p == q1 ] 
+    -- 'go' implementa una búsqueda (DFS)
+    -- worklist: Estados que nos faltan por revisar
+    -- visitados: Set de estados que ya hemos procesado
+    go :: [Estado] -> S.Set Estado -> S.Set Estado
+    go [] visitados = visitados -- Caso base: no hay más trabajo
+    go (actual:resto_worklist) visitados
+      
+      -- Si ya visitamos este estado, lo ignoramos y seguimos
+      | actual `S.member` visitados = go resto_worklist visitados
+      
+      -- Si es un estado nuevo:
+      | otherwise =
+          -- 1. Lo marcamos como visitado
+          let nuevosVisitados = S.insert actual visitados
+          -- 2. Encontramos todos sus vecinos épsilon directos
+              vecinosEps = concat [ dest | (p, Nothing, dest) <- transiciones m, p == actual ]
+          -- 3. Seguimos la búsqueda, añadiendo los nuevos vecinos
+          --    al frente de la lista de trabajo (DFS)
+          in go (vecinosEps ++ resto_worklist) nuevosVisitados
 
-eclosure2 :: AFNEp -> [String] -> [String]
-eclosure2 _ [] = [] --Caso base
---Toma el primer estado, calcula su e-closure, lo mismo para el reso, concatena; al final limpia duplicados.
-eclosure2 m (x:xs) = rmDup (eclosure (transiciones m) m x ++ eclosure2 m xs) 
+-- | Función auxiliar que calcula la e-closure para CADA estado en una lista.
+eclosureSet :: AFNEp -> [Estado] -> [Estado]
+eclosureSet m qs = nub (concatMap (eclosure m) qs)
 
---Toma un solo estado y devuelve todos los estados a los que puede ir leyendo el símbolo
-do_trans_nep :: [Trans_eps] -> Char -> String -> [String]
-do_trans_nep [] _ _ = []
-do_trans_nep ((q1, Just c1, q2):xs) c2 q3 --Si la transicion es con un simbolo,comparamos:
-  | q1 == q3 && c1 == c2 = rmDup (q2 ++ do_trans_nep xs c2 q3) --si coincide agregamos el destino
-  | otherwise = do_trans_nep xs c2 q3 --si no coincide seguimos buscando
-do_trans_nep (_:xs) c2 q3 = do_trans_nep xs c2 q3  -- si la transicion es epsilon, la ignoramos
+-- (2) Ahora calculamos la nueva transición para un conjunto de estados y un símbolo.
 
---Toma un conjunto de estados y devuelve todos los estados a los que puede ir leyendo el símbolo
-do_trans_nep2 :: [Trans_eps] -> Char -> [String] -> [String]
-do_trans_nep2 l c qs = rmDup (concatMap (do_trans_nep l c) qs)
+-- DUDOTA
+do_trans :: AFNEp -> [Estado] -> Char -> [Estado]
+do_trans m listaEstados a =
+  nub $ concat [ destList | (q, Just c, destList) <- transiciones m, -- Para cada transición con símbolo.
+                            q `elem` listaEstados,      -- que empiece en un estado de nuestro conjunto 'setS'
+                            c == a ]            -- y que use el símbolo 'a'
+                            
+-- (3) d'(q, a) = EC ( d ( EC (q) , a ) )                        
 
---crea todas las transiciones del AFN resultante
-trans_eps_to_afn :: AFNEp -> [Trans_afn]
-trans_eps_to_afn m =
-  concatMap (trans_eps_to_afn_aux m (transiciones m) (alfabeto m)) (estados m)
 
---Recibe el autómata, sus transiciones, el alfabeto y un estado q; regresa todas las transiciones desde q para cada símbolo.
-trans_eps_to_afn_aux :: AFNEp -> [Trans_eps] -> String -> String -> [Trans_afn]
-trans_eps_to_afn_aux _ _ [] _ = []
-trans_eps_to_afn_aux m l (c:cs) q =
-  (q, c, qn) : trans_eps_to_afn_aux m l cs q
+-- Generamos la lista de todas las transiciones para el nuevo AFN.
+transicionesAFN :: AFNEp -> [Trans_afn]
+transicionesAFN m =
+  -- Para cada estado q en el autómata
+  concatMap (transicionesAFN_aux m (alfabeto m)) (estados m)
+
+-- Calculamos todas las transiciones desde un estado q para cada símbolo, a partir del autómata con epsilom,
+-- sus transiciones, el alfabeto y un estado q.
+transicionesAFN_aux :: AFNEp -> [Char] -> Estado -> [Trans_afn]
+transicionesAFN_aux _ [] _ = [] -- Alfabeto vació, que es el caso base.
+transicionesAFN_aux m (x:xs) q =
+  -- Construimos la transición para el símbolo x y se sigue con el resto.
+  (q, x, qn) : transicionesAFN_aux m xs q
   where
-    -- 1) ε-closure(q)
-    cq   = eclosure l m q
-    -- 2) δ(cq, c)
-    paso = do_trans_nep2 l c cq
-    -- 3) ε-closure(δ(...))
-    qn   = eclosure2 m paso
+    -- cq -> EC(q)
+    cq = eclosure m q
+    -- paso -> d (cq, c) 
+    paso = do_trans m cq x
+    -- qn -> EC(paso)
+    qn = eclosureSet m paso
 
---calcula los finales del AFN a partir de los finales del AFNε
-finalesDesdeCerradura :: AFNEp -> [String]
-finalesDesdeCerradura m = [ q | q <- estados m, final m `elem` eclosure (transiciones m) m q ]
 
-afnEp_to_AFN :: AFNEp -> AFN
-afnEp_to_AFN m = AFN{ estadosN = estados m, alfabetoN = alfabeto m,
-                    transicionesN = trans_eps_to_afn m,
-                    inicialN = inicial m, finalesN = finalesDesdeCerradura m
-}
+-- (4) Calculamos los nuevos estados finales para AFN
+
+
+nuevosFinales :: AFNEp -> [Estado]
+-- Un estado es final si su E-closure contenía al estado final del AFNEp.
+nuevosFinales m = [ q | q <- estados m, final m `elem` eclosure m q ]
+
+
+-- (5) Ensamblamos todo 
+aFNEp_to_AFN :: AFNEp -> AFN
+aFNEp_to_AFN m = AFN {estados2 = estados m, alfabeto2 = alfabeto m,
+                    transiciones2 = transicionesAFN m,
+                    inicial2 = inicial m, finales2 = nuevosFinales m
+                    }
