@@ -1,18 +1,14 @@
 -- >>>>> Definición de AFD y la función para pasar de AFN --> AFD <<<<<
 module AFD where
 
--- Importamos la definición de AFN que creamos
+
+-- Importamos la definición de AFN y el dato Estado
 import AFN
+import AFNEp (Estado)
+-- 
+import Data.List (nub, intercalate, sort)
 
--- ¡CAMBIO! Importa el módulo 'AFNEp' completo
--- (esto nos da el tipo 'Estado' Y la función 'compilarAFNEp')
-import AFNEp
 
--- ¡CAMBIO! Importamos 'nub' e 'intercalate'
-import Data.List (nub, intercalate)
-
--- ¡CAMBIO! Importamos 'ER' para poder definir la ER de prueba
-import ER
 
 -- Transición determinista. 
 -- Estado origen -> Símbolo -> Estado destino.
@@ -43,29 +39,38 @@ instance Show AFD where
       
 -- ### Función auxiliar que convierte una lista de estados en un nombre ###
 renombra :: [Estado] -> Estado
-renombra = intercalate ","
+-- Ordenamos la lista antes de unirla
+renombra = intercalate "," . sort
+
+
 
 -- ========== Lógica para pasar de AFN a AFD ========== 
 
--- ### Función auxiliar que calcula la delta para un conjunto de Estados y un símbolo a ###
+
+
+-- \\\ Función que calcula la delta para un conjunto de Estados y un símbolo a ///
 alcanzables :: AFN -> [Estado] -> Char -> [Estado]
 alcanzables afn conj a =
-  -- Recorremos todas las transiciones de AFN. Luego las filtramos las que estan en nuestra lista de
+  -- Recorremos todas las transiciones de AFN. Luego filtramos las que estan en nuestra lista de
   -- estados y usan el símbolo a. Recolectamos todos los estados destino y finalmente eliminamos duplicados.
   nub [ destino | (q, c', ds) <- transiciones2 afn, q `elem` conj , c' == a , destino <- ds ]
         
 
--- ### Función auxiliar que descubre todos los estados alcanzables del nuevo AFD.
--- Regresamos los pares ([estados en AFN], "nombre Estado AFD")
+
+-- \\\ Función que descubre todos los estados alcanzables del nuevo AFD ///
+-- Vamos a regresar los pares ([estados en AFN], "nombre Estado AFD")
 descubrirEstados :: AFN -> [([Estado], Estado)]
 descubrirEstados afn =
     -- Definimos el estado inicial del AFD, que es el conjunto que solo contiene al inicial del AFN.
-    let inicialSet = [inicial2 afn]
-        inicialStr = renombra inicialSet
-    -- Encontramos recursivamente el resto con procesa.
-    in procesa afn [(inicialSet, inicialStr)] []    
+    let conjuntoInicial = [inicial2 afn]
+        -- Nuevo nombre
+        nombre = renombra conjuntoInicial
+    -- Encontramos recursivamente el resto con la función procesa.
+    in procesa afn [(conjuntoInicial, nombre)] []    
     
--- ### Función auxiliar que hace la búsqueda de estados alcanzables ###
+    
+
+-- \\\ Función que hace la búsqueda de estados alcanzables ///
 -- Necesitamos el AFN, la lista de estados pendientes por procesar y la lista de estados visitados.
 procesa :: AFN -> [([Estado], Estado)] -> [([Estado], Estado)] -> [([Estado], Estado)]
 -- Nuestro caso base será que no hay más pendientes, así que regresamos los visitados.
@@ -82,34 +87,40 @@ procesa afn ((conj, nombre):pendientes) visitados
       -- a la lista de los visitados.
       in procesa afn (pendientes ++ nuevos) (visitados ++ [(conj, nombre)])
         
--- ### Función auxiliar para genera la lista de todas las transiciones del nuevo AFD ###
+        
+        
+-- \\\ Función para genera la lista de todas las transiciones del nuevo AFD ///
 calcularTransiciones :: AFN -> [([Estado], Estado)] -> [Trans_afd]
 calcularTransiciones afn todosEstados =
-  [ (nombre, c, renombra (alcanzables afn conjunto c))
-  | (conjunto, nombre) <- todosEstados , c <- alfabeto2 afn
-  , not (null (alcanzables afn conjunto c))]
+  [ (nombre, c, renombra (alcanzables afn conjunto c)) -- Para cada nuevo estado (conjunto, nombre),
+  | (conjunto, nombre) <- todosEstados , c <- alfabeto2 afn -- para cada carácter c del alfabeto, 
+  , not (null (alcanzables afn conjunto c))] -- y si la transición nos lleva a algún lado, pues creamos la transición determ.
         
--- ### Función auxiliar que fenera la lista de los estados finales del nuevo AFD ###
+        
+        
+-- \\\ Función auxiliar que fenera la lista de los estados finales del nuevo AFD ///
 calcularFinales :: AFN -> [([Estado], Estado)] -> [Estado]
 calcularFinales afn todosEstados =
-  [ nombre | (conjunto, nombre) <- todosEstados , any (`elem` finales2 afn) conjunto ]
+  -- Un estado del AFD es final si su conjunto de estados tiene alguna intersección 
+  -- con los estados finales del AFN.
+  [ estadoF | (conjunto, estadoF) <- todosEstados , any (`elem` finales2 afn) conjunto ]
         
         
--- <<< Función que convierte un AFN a un AFD >>>
+-- <<< Función principal. Convierte un AFN a un AFD >>>
 aFN_to_AFD :: AFN -> AFD
 aFN_to_AFD afn =
     -- Descubrimos todos los estados alcanzables.
     let todosEstados = descubrirEstados afn
-        -- Calculamos el estado inicial
+        -- Calculamos el estado inicial.
         estadoInicial = snd (head todosEstados)
-        -- Calculamos todas las transiciones del AFD
+        -- Calculamos todas las transiciones del AFD.
         transiciones = calcularTransiciones afn todosEstados
-        -- Calculamos los estados finales del AFD
+        -- Calculamos los estados finales del AFD.
         estadosFinales = calcularFinales afn todosEstados
-        -- Obtenemos la lista final de nombres de estados
+        -- Obtenemos la lista final de nombres de estados.
         listaEstados = map snd todosEstados
         
-    -- Al final, ensamblamos todo
+    -- Al final, ensamblamos todo.
     in AFD { estadosD = listaEstados,
              alfabetoD = alfabeto2 afn,
              transicionesD = transiciones,

@@ -99,7 +99,7 @@ espacios = And espacioBlanco (Kleene espacioBlanco)
 
 -- ER auxiliar para representar todo el alfabeto de IMP.
 alfabeto :: Expr
-alfabeto = Range ' ' '~'
+alfabeto = Range ' ' '~' -- Todos los símbolos. 
 
 -- --->     ER de los comentarios :: // (alfabeto)^* \n     <---
 comentarios :: Expr

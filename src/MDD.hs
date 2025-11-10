@@ -37,7 +37,7 @@ lexer listaMDDs input = go input []
   where
     go [] accTokens = reverse accTokens
     go currentInput@(c:cs) accTokens
-      | c == '\0' = reverse accTokens      -- 👈 detenerse sin error
+      | c == '\0' = reverse accTokens
       | otherwise =
           let posiblesMatches =
                 [ (prioridad info, categoria info, lexema)

@@ -44,7 +44,7 @@ test-suite Tests
   type: exitcode-stdio-1.0
   main-is: Test.hs
   other-modules:
-      Paths_Proyecto01_Analizador_L_xico
+      TestAFNEp
   hs-source-dirs:
       test
   build-depends:

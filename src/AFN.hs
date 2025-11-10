@@ -1,16 +1,16 @@
 -- >>>>> Definición de AFN y la función para pasar de AFNepsilon --> AFN <<<<<
 module AFN (AFN(..), Trans_afn, aFNEp_to_AFN) where
 
+
 -- Se importa la definición de AFNEp.
 import AFNEp
--- Importamos nub para eliminar duplicados
-import Data.List (nub)
+-- Usamos Set para hacer conjuntos de estados.
 import qualified Data.Set as S
 
 
 -- Definición de una transición con un símbolo.
 -- Estado origen -> Símbolo -> Lista de estados destino
-type Trans_afn = (Estado, Char, [Estado]) -- (estadoDeOrigen, simboloLeido, listaDeEstadosDestino)
+type Trans_afn = (Estado, Char, [Estado])
 
 
 -- Definición de Autómata no determinista
@@ -35,82 +35,119 @@ instance Show AFN where
       , "}"
       ]
 
--- ========== Lógica para pasar de AFNEp a AFN ========== 
 
-eclosure :: AFNEp -> Estado -> [Estado]
+
+-- ### (1) Calculo de las E-closure ###
+
+
+
+-- \\\ Cálculo de la E-closure para un estado q ///
+eclosure :: AFNEp -> Estado -> S.Set Estado
 eclosure m q =
-    -- S.toList convierte el Set final de estados en una lista
-    S.toList (go [q] S.empty)
+    -- La idea es implementar una búsqueda tipo DFS para encontrar los
+    -- estados alcanzables. Dicha implementación recibe la lista de estados por
+    -- revisar y el conjunto de estados que ya hemos procesado.
+    
+    -- Iniciamos dfs con el estado q tanto en los estados por revisar,
+    -- como en los estados visitados. Singleton para un solo un elemento.
+    dfs [q] (S.singleton q)
+    
   where
-    -- 'go' implementa una búsqueda (DFS)
-    -- worklist: Estados que nos faltan por revisar
-    -- visitados: Set de estados que ya hemos procesado
-    go :: [Estado] -> S.Set Estado -> S.Set Estado
-    go [] visitados = visitados -- Caso base: no hay más trabajo
-    go (actual:resto_worklist) visitados
-      
-      -- Si ya visitamos este estado, lo ignoramos y seguimos
-      | actual `S.member` visitados = go resto_worklist visitados
-      
-      -- Si es un estado nuevo:
-      | otherwise =
-          -- 1. Lo marcamos como visitado
-          let nuevosVisitados = S.insert actual visitados
-          -- 2. Encontramos todos sus vecinos épsilon directos
-              vecinosEps = concat [ dest | (p, Nothing, dest) <- transiciones m, p == actual ]
-          -- 3. Seguimos la búsqueda, añadiendo los nuevos vecinos
-          --    al frente de la lista de trabajo (DFS)
-          in go (vecinosEps ++ resto_worklist) nuevosVisitados
+    -- EstadosPorRevisar -> EstadosVisitados -> EstadosAlcanzables
+    dfs :: [Estado] -> S.Set Estado -> S.Set Estado
+    -- Caso base. No hay más estados por procesar.
+    -- Simplemente devolvemos el conjunto de estados visitados.
+    dfs [] visitados = visitados
+    -- Caso recursivo.
+    dfs (qi : estados) visitados =
+          -- Vemos todos los vecinos alcanzables desde qi con epsilon.
+          let vecinosAlcanzables = S.fromList [ qDestino | (qOrigen, Nothing, qDestinos) <- transiciones m, qOrigen == qi, qDestino <- qDestinos ]
+              -- Filtramos los vecinos que no hayamos visitado. Difference para la resta entre conjuntos.
+              nuevosVecinos = S.difference vecinosAlcanzables visitados
+              -- Agregamos estos nuevos vecinos al resto de estados por procesar.
+              nuevosPorRevisar = S.toList nuevosVecinos ++ estados
+              -- Agregamos estos nuevos vecinos al conjunto de 'visitados'.
+              nuevosVisitados = S.union visitados nuevosVecinos
+          -- Continuamos la búsqueda recursiva.
+          in dfs nuevosPorRevisar nuevosVisitados
 
--- | Función auxiliar que calcula la e-closure para CADA estado en una lista.
-eclosureSet :: AFNEp -> [Estado] -> [Estado]
-eclosureSet m qs = nub (concatMap (eclosure m) qs)
 
--- (2) Ahora calculamos la nueva transición para un conjunto de estados y un símbolo.
 
--- DUDOTA
-do_trans :: AFNEp -> [Estado] -> Char -> [Estado]
-do_trans m listaEstados a =
-  nub $ concat [ destList | (q, Just c, destList) <- transiciones m, -- Para cada transición con símbolo.
-                            q `elem` listaEstados,      -- que empiece en un estado de nuestro conjunto 'setS'
-                            c == a ]            -- y que use el símbolo 'a'
+-- \\\ Función que calcula la E-closure para un conjunto de estados ///
+-- Digamos que simplemente es la unión de las E-closure de cada estado en la lista.
+eclosure_Union :: AFNEp -> S.Set Estado -> S.Set Estado
+-- con foldMap aplicamos (eclosure m) a cada estado 'q' en 'estados', 
+-- para al final unir todos los conjuntos resultantes.
+eclosure_Union m estados = foldMap (eclosure m) estados
+
+
+
+-- ### (2) Cálculo de Delta ###
+
                             
--- (3) d'(q, a) = EC ( d ( EC (q) , a ) )                        
+
+-- \\\ Función que calcula la función delta para un conjunto de estados y un símbolo ///
+delta :: AFNEp -> S.Set Estado -> Char -> S.Set Estado
+delta m setEstados a =
+  -- con S.fromList nos encargamos de los duplicados.
+  S.fromList [ dest | (q, Just c, listaDestinos) <- transiciones m, -- Para las transiciones.
+                        q `S.member` setEstados, -- donde q esté en nuestro conjunto de origen
+                        c == a, -- y el símbolo sea 'a'
+                        dest <- listaDestinos ] -- y el símbolo sea 'a'
+                            
+                            
+                            
+-- ### (3) Cálculo de la nueva función de transición delta' ###
+--  d'(q, a) = ECLOSURE( d( ECLOSURE(q), a ) ) 
 
 
--- Generamos la lista de todas las transiciones para el nuevo AFN.
+
+-- \\\ Función para generar a lista de todas las transiciones para el nuevo AFN ///
 transicionesAFN :: AFNEp -> [Trans_afn]
 transicionesAFN m =
-  -- Para cada estado q en el autómata
-  concatMap (transicionesAFN_aux m (alfabeto m)) (estados m)
-
--- Calculamos todas las transiciones desde un estado q para cada símbolo, a partir del autómata con epsilom,
--- sus transiciones, el alfabeto y un estado q.
-transicionesAFN_aux :: AFNEp -> [Char] -> Estado -> [Trans_afn]
-transicionesAFN_aux _ [] _ = [] -- Alfabeto vació, que es el caso base.
-transicionesAFN_aux m (x:xs) q =
-  -- Construimos la transición para el símbolo x y se sigue con el resto.
-  (q, x, qn) : transicionesAFN_aux m xs q
-  where
-    -- cq -> EC(q)
-    cq = eclosure m q
-    -- paso -> d (cq, c) 
-    paso = do_trans m cq x
-    -- qn -> EC(paso)
-    qn = eclosureSet m paso
+  -- Usamos una lista para iterar sobre cada estado 'q' y cada símbolo 'a'.
+  [ (q, a, S.toList deltaFinal) -- Creamos la transición (q, a, destinos).
+  | q <- estados m, -- Para cada estado 'q' en el autómata.
+    a <- alfabeto m, -- Para cada símbolo 'a' en el alfabeto.
+    let ecQ = eclosure m q  -- Calculamos EC(q).
+        delta_ecQ = delta m ecQ a    -- Calculamos d(EC(q), a).
+        deltaFinal = eclosure_Union m delta_ecQ -- Calculamos EC( d(EC(q), a)).
+  , not (S.null deltaFinal) ]
 
 
--- (4) Calculamos los nuevos estados finales para AFN
+
+-- ### (4) Nuevos estados finales ###
 
 
+
+-- \\\ Función para calcular los estados finales en el nuevo AFN ///
 nuevosFinales :: AFNEp -> [Estado]
--- Un estado es final si su E-closure contenía al estado final del AFNEp.
-nuevosFinales m = [ q | q <- estados m, final m `elem` eclosure m q ]
+nuevosFinales m = 
+    -- Primero obtenemos el conjunto de estados finales del AFNEp que tenemos como entrada.
+    let antiguosFinales = S.fromList (finales m)
+    -- Iteramos sobre los estado 'q' del autómata.
+    in [ q | q <- estados m,
+           -- Calculamos la E-closure de 'q'.
+           let ec_q = eclosure m q,
+           -- Vemos si la intersección entre ec_q y antiguosFinales no está vacía.
+           -- S.disjoint(A, B) nos dice si la intersección es vacia. Si lo negamos,
+           -- entonces nos dice si la intersección no esta vacía.
+           not (S.disjoint ec_q antiguosFinales) ]
+           
+           
+          
+-- ### (5) Ensamble final para crear un AFN apartir de AFNEp
 
 
--- (5) Ensamblamos todo 
+
+-- <<< Función principal. Pasa de AFNEp a AFN >>>
 aFNEp_to_AFN :: AFNEp -> AFN
-aFNEp_to_AFN m = AFN {estados2 = estados m, alfabeto2 = alfabeto m,
-                    transiciones2 = transicionesAFN m,
-                    inicial2 = inicial m, finales2 = nuevosFinales m
-                    }
+aFNEp_to_AFN m = AFN {
+    -- Los estados, el alfabeto y el estado inicial no cambian.
+    estados2 = estados m,
+    alfabeto2 = alfabeto m,
+    inicial2 = inicial m,
+    -- calculamos las nuevas transiciones y los nuevos estados finales.
+    transiciones2 = transicionesAFN m,
+    finales2 = nuevosFinales m
+  }
