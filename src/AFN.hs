@@ -5,7 +5,7 @@ module AFN (AFN(..), Trans_afn, aFNEp_to_AFN) where
 -- Se importa la definición de AFNEp.
 import AFNEp
 -- Usamos Set para hacer conjuntos de estados.
-import qualified Data.Set as S
+import qualified Data.Set as Conj
 
 
 -- Definición de una transición con un símbolo.
@@ -26,14 +26,17 @@ data AFN = AFN {
 instance Show AFN where
   show m =
     unlines
-      [ "AFN {"
-      , "  estados      = " ++ show (estados2 m)
-      , "  alfabeto     = " ++ show (alfabeto2 m)
-      , "  transiciones = " ++ show (transiciones2 m)
-      , "  inicial      = " ++ show (inicial2 m)
-      , "  finales      = " ++ show (finales2 m)
-      , "}"
+      ["\n----------------------------------------------------------------------" 
+      ,"                 ***** Imprimiendo AFN *****" 
+      , "\n>> estados      = " ++ show (estados2 m)
+      , "\n>> alfabeto     = " ++ show (alfabeto2 m)
+      , "\n>> transiciones = " ++ show (transiciones2 m)
+      , "\n>> inicial      = " ++ show (inicial2 m)
+      , "\n>> finales      = " ++ show (finales2 m)
+      , "\nListo :D"
+      ,"----------------------------------------------------------------------"
       ]
+      
 
 
 
@@ -42,7 +45,7 @@ instance Show AFN where
 
 
 -- \\\ Cálculo de la E-closure para un estado q ///
-eclosure :: AFNEp -> Estado -> S.Set Estado
+eclosure :: AFNEp -> Estado -> Conj.Set Estado
 eclosure m q =
     -- La idea es implementar una búsqueda tipo DFS para encontrar los
     -- estados alcanzables. Dicha implementación recibe la lista de estados por
@@ -50,24 +53,24 @@ eclosure m q =
     
     -- Iniciamos dfs con el estado q tanto en los estados por revisar,
     -- como en los estados visitados. Singleton para un solo un elemento.
-    dfs [q] (S.singleton q)
+    dfs [q] (Conj.singleton q)
     
   where
     -- EstadosPorRevisar -> EstadosVisitados -> EstadosAlcanzables
-    dfs :: [Estado] -> S.Set Estado -> S.Set Estado
+    dfs :: [Estado] -> Conj.Set Estado -> Conj.Set Estado
     -- Caso base. No hay más estados por procesar.
     -- Simplemente devolvemos el conjunto de estados visitados.
     dfs [] visitados = visitados
     -- Caso recursivo.
     dfs (qi : estados) visitados =
           -- Vemos todos los vecinos alcanzables desde qi con epsilon.
-          let vecinosAlcanzables = S.fromList [ qDestino | (qOrigen, Nothing, qDestinos) <- transiciones m, qOrigen == qi, qDestino <- qDestinos ]
-              -- Filtramos los vecinos que no hayamos visitado. Difference para la resta entre conjuntos.
-              nuevosVecinos = S.difference vecinosAlcanzables visitados
+          let vecinosAlcanzables = Conj.fromList [ qDestino | (qOrigen, Nothing, qDestinos) <- transiciones m, qOrigen == qi, qDestino <- qDestinos ]
+              -- Filtramos los veciParanos que no hayamos visitado. Difference para la resta entre conjuntos.
+              nuevosVecinos = Conj.difference vecinosAlcanzables visitados
               -- Agregamos estos nuevos vecinos al resto de estados por procesar.
-              nuevosPorRevisar = S.toList nuevosVecinos ++ estados
+              nuevosPorRevisar = Conj.toList nuevosVecinos ++ estados
               -- Agregamos estos nuevos vecinos al conjunto de 'visitados'.
-              nuevosVisitados = S.union visitados nuevosVecinos
+              nuevosVisitados = Conj.union visitados nuevosVecinos
           -- Continuamos la búsqueda recursiva.
           in dfs nuevosPorRevisar nuevosVisitados
 
@@ -75,7 +78,7 @@ eclosure m q =
 
 -- \\\ Función que calcula la E-closure para un conjunto de estados ///
 -- Digamos que simplemente es la unión de las E-closure de cada estado en la lista.
-eclosure_Union :: AFNEp -> S.Set Estado -> S.Set Estado
+eclosure_Union :: AFNEp -> Conj.Set Estado -> Conj.Set Estado
 -- con foldMap aplicamos (eclosure m) a cada estado 'q' en 'estados', 
 -- para al final unir todos los conjuntos resultantes.
 eclosure_Union m estados = foldMap (eclosure m) estados
@@ -87,11 +90,11 @@ eclosure_Union m estados = foldMap (eclosure m) estados
                             
 
 -- \\\ Función que calcula la función delta para un conjunto de estados y un símbolo ///
-delta :: AFNEp -> S.Set Estado -> Char -> S.Set Estado
+delta :: AFNEp -> Conj.Set Estado -> Char -> Conj.Set Estado
 delta m setEstados a =
   -- con S.fromList nos encargamos de los duplicados.
-  S.fromList [ dest | (q, Just c, listaDestinos) <- transiciones m, -- Para las transiciones.
-                        q `S.member` setEstados, -- donde q esté en nuestro conjunto de origen
+  Conj.fromList [ dest | (q, Just c, listaDestinos) <- transiciones m, -- Para las transiciones.
+                        q `Conj.member` setEstados, -- donde q esté en nuestro conjunto de origen
                         c == a, -- y el símbolo sea 'a'
                         dest <- listaDestinos ] -- y el símbolo sea 'a'
                             
@@ -106,13 +109,13 @@ delta m setEstados a =
 transicionesAFN :: AFNEp -> [Trans_afn]
 transicionesAFN m =
   -- Usamos una lista para iterar sobre cada estado 'q' y cada símbolo 'a'.
-  [ (q, a, S.toList deltaFinal) -- Creamos la transición (q, a, destinos).
+  [ (q, a, Conj.toList deltaFinal) -- Creamos la transición (q, a, destinos).
   | q <- estados m, -- Para cada estado 'q' en el autómata.
     a <- alfabeto m, -- Para cada símbolo 'a' en el alfabeto.
     let ecQ = eclosure m q  -- Calculamos EC(q).
         delta_ecQ = delta m ecQ a    -- Calculamos d(EC(q), a).
         deltaFinal = eclosure_Union m delta_ecQ -- Calculamos EC( d(EC(q), a)).
-  , not (S.null deltaFinal) ]
+  , not (Conj.null deltaFinal) ]
 
 
 
@@ -124,7 +127,7 @@ transicionesAFN m =
 nuevosFinales :: AFNEp -> [Estado]
 nuevosFinales m = 
     -- Primero obtenemos el conjunto de estados finales del AFNEp que tenemos como entrada.
-    let antiguosFinales = S.fromList (finales m)
+    let antiguosFinales = Conj.fromList (finales m)
     -- Iteramos sobre los estado 'q' del autómata.
     in [ q | q <- estados m,
            -- Calculamos la E-closure de 'q'.
@@ -132,7 +135,7 @@ nuevosFinales m =
            -- Vemos si la intersección entre ec_q y antiguosFinales no está vacía.
            -- S.disjoint(A, B) nos dice si la intersección es vacia. Si lo negamos,
            -- entonces nos dice si la intersección no esta vacía.
-           not (S.disjoint ec_q antiguosFinales) ]
+           not (Conj.disjoint ec_q antiguosFinales) ]
            
            
           

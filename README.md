@@ -4,6 +4,7 @@ La estructura que sigue este proyecto es la siguiente:  \
 
 |-- docs/ \
 |     | --  Reporte.pdf \
+|     | --  Enteros.pdf \
 | \
 |-- main/ \
 │    |-- Main.hs (Programa principal) \
@@ -20,8 +21,14 @@ La estructura que sigue este proyecto es la siguiente:  \
 |    |-- MDD.hs (Lógica para construir una MDD con AFDmin) \
 | \
 |-- test/ \
-|    |-- Test.hs (Pruebas unitarias) \
-|    \
+|    |-- Test.hs (Módulo que ejecuta todas las pruebas de esta carpeta) \
+|    |-- TestAFNEp.hs (Pruebas para AFNepsilon) \
+|    |-- TestAFN.hs (Pruebas para AFN) \
+|    |-- TestAFD.hs (Pruebas para AFD) \
+|    |-- TestAFDmin.hs (Pruebas para AFD min) \
+|    |-- TestMDD.hs (Pruebas para MDD) \
+|    |-- TestLexer.hs (Pruebas finales del Lexer) \
+| \
 |-- package.yaml \
 |-- Proyecto01-Analizador-L-xico.cabal \
 |-- README.md (Este archivo) \

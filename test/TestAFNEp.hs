@@ -1,25 +1,18 @@
--- Pruebas para AFNEp
 module TestAFNEp (runTestsAFNEp) where
 
 import ER
 import AFNEp
 import Gramatica
 
--- Vamos a probar 3 ER sencillas:
-
--- (1) -->  0(1 + 0)^*
 er1 :: Expr
 er1 = And (Term '0') (Kleene (Or (Term '1') (Term '0')))
 
--- (2) --> (ab + b)^∗ ab^∗
 er2 :: Expr
 er2 = And (Kleene (Or (And (Term 'a') (Term 'b')) (Term 'b'))) (And (Term 'a') (Kleene (Term 'b')))
 
--- (3) --> ER de los enteros 
 er3 :: Expr
 er3 = enteros
 
--- Una función principal para correr las pruebas de este módulo
 runTestsAFNEp :: IO ()
 runTestsAFNEp = do
     putStrLn "\n   =============================================="

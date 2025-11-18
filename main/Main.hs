@@ -34,11 +34,9 @@ main = do
   putStrLn "|| Adios ||"
   putStrLn "===========\n"
 
--- dentro de Main.hs
-
 leerFuente :: IO String
 leerFuente = do
-  let archivo = "main/implementacion.imp"     -- <- cámbialo aquí si quieres otro nombre
+  let archivo = "main/implementacion.imp"
   res <- tryReadFile archivo
   case res of
     Just txt -> return txt

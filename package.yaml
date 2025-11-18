@@ -36,6 +36,11 @@ tests:
     source-dirs: test
     other-modules:
       - TestAFNEp
+      - TestAFN
+      - TestAFD
+      - TestAFDmin
+      - TestMDD
+      - TestLexer
     dependencies:
       - base
       - containers

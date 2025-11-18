@@ -45,6 +45,11 @@ test-suite Tests
   main-is: Test.hs
   other-modules:
       TestAFNEp
+      TestAFN
+      TestAFD
+      TestAFDmin
+      TestMDD
+      TestLexer
   hs-source-dirs:
       test
   build-depends:

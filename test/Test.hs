@@ -1,8 +1,11 @@
--- test/Test.hs
 module Main (main) where
 
--- Importa los módulos de prueba que vayas creando
 import TestAFNEp
+import TestAFN
+import TestAFD
+import TestAFDmin
+import TestMDD
+import TestLexer
 
 main :: IO ()
 main = do
@@ -10,8 +13,12 @@ main = do
     putStrLn "   ########## INICIANDO TESTS PARA ANALIZADOR LÉXICO ##########"
     putStrLn "   ############################################################\n"
     
-    -- Llama a las pruebas de cada módulo
     runTestsAFNEp
+    runTestsAFN
+    runTestsAFD
+    runTestsAFDmin
+    runTestsMDD
+    runTestsLexer
     
     putStrLn "\n   #########################################"
     putStrLn "   ########## PRUEBAS FINALIZADAS ##########"

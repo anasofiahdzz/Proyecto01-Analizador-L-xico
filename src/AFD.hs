@@ -5,7 +5,7 @@ module AFD where
 -- Importamos la definición de AFN y el dato Estado
 import AFN
 import AFNEp (Estado)
--- 
+
 import Data.List (nub, intercalate, sort)
 
 
@@ -26,14 +26,16 @@ data AFD = AFD {
 -- Show personalizado, para poder imprimir mejor nuestra autómata.
 instance Show AFD where
   show m =
-    unlines
-      [ "AFD {"
-      , "  estados      = " ++ show (estadosD m)
-      , "  alfabeto     = " ++ show (alfabetoD m)
-      , "  transiciones = " ++ show (transicionesD m)
-      , "  inicial      = " ++ show (inicialD m)
-      , "  finales      = " ++ show (finalesD m)
-      , "}"
+    unlines      
+      ["\n----------------------------------------------------------------------" 
+      ,"                 ***** Imprimiendo AFD *****" 
+      , "\n>> estados      = " ++ show (estadosD m)
+      , "\n>> alfabeto     = " ++ show (alfabetoD m)
+      , "\n>> transiciones = " ++ show (transicionesD m)
+      , "\n>> inicial      = " ++ show (inicialD m)
+      , "\n>> finales      = " ++ show (finalesD m)
+      , "\nListo :D"
+      ,"----------------------------------------------------------------------"
       ]
       
       
@@ -104,25 +106,102 @@ calcularFinales afn todosEstados =
   -- Un estado del AFD es final si su conjunto de estados tiene alguna intersección 
   -- con los estados finales del AFN.
   [ estadoF | (conjunto, estadoF) <- todosEstados , any (`elem` finales2 afn) conjunto ]
+  
+
+
+-- \\\ Función auxiliar para ver si existe una transición ///
+existeTrans :: [Trans_afd] -> Estado -> Char -> Bool
+-- Nos detenemos en cuanto encontremos una transición que cumpla la condición.
+existeTrans trans q c = any (\(q', c', _) -> q' == q && c' == c) trans
+
+
+
+-- \\\ Función que completa el AFD añadiendo un estado sumidero ///
+completarAFD :: AFD -> AFD
+completarAFD afd =
+    let estados = estadosD afd
+        alfabeto = alfabetoD afd
+        transiciones = transicionesD afd
+        -- Nuevo estado sumidero
+        estadoSumidero = "Sumidero" 
+        
+        -- Encontramos todas las transiciones faltantes.
+        transicionesFaltantes = [ (q, c, estadoSumidero) 
+                                | q <- estados, c <- alfabeto
+                                , not (existeTrans transiciones q c) ]
+        
+        -- Si no faltan transiciones, devolvemos el AFD original.
+        (estadosNuevos, transicionesNuevas)
+            | null transicionesFaltantes = (estados, transiciones)
+            | otherwise = 
+                -- Si faltan, añadimos el estado sumidero y sus transiciones.
+                -- Todas las transicicones que salen del sumidero, dan al mismo sumidero.
+                let transError = [ (estadoSumidero, c, estadoSumidero) | c <- alfabeto ]
+                in (estados ++ [estadoSumidero], transiciones ++ transicionesFaltantes ++ transError)
+
+    -- Devolvemos el AFD actualizado
+    in afd { estadosD = estadosNuevos, transicionesD = transicionesNuevas }
+
+
+
+-- \\\ Función que renombra todos los estados a q_i ///
+renombrarAFD :: AFD -> AFD
+renombrarAFD afd =
+    let inicialAntiguo = inicialD afd
+        -- Generamos una lista ordenada de los estados antiguos.
+        estadosAntiguos = sort (nub (estadosD afd))
+        
+        -- Lo que queremos hacer es una lista de los siguientes pares -> (Antiguo nombre, Nuevo nombre)
+        estadosSinInicial = filter (/= inicialAntiguo) estadosAntiguos
+        -- Nos aseguramos de que el estado inicial siempre sea "q0"
+        inicial = (inicialAntiguo, "q0")
+        -- Empezamos el renombramiento.
+        resto = zip estadosSinInicial ["q" ++ show i | i <- [1..]]
+        nuevosNombres = inicial : resto
+
+        -- Ya hay que hacerlo aquí mismo...
+        -- Función auxiliar para buscar el nuevo nombre.
+        buscarNombre :: Estado -> Estado
+        buscarNombre qAntiguo = 
+            case lookup qAntiguo nuevosNombres of
+                Just qNuevo -> qNuevo
+                -- Just in case...
+                Nothing -> qAntiguo 
+                
+        -- Aplicamos los nuevos nombres a todos los componentes del AFD
+        nuevosEstados = sort (map snd nuevosNombres) 
+        nuevoInicial = "q0"
+        nuevosFinales = sort (nub (map buscarNombre (finalesD afd)))
+        nuevasTransiciones = [ (buscarNombre q, c, buscarNombre qd)
+                             | (q, c, qd) <- transicionesD afd ]
+    
+    in AFD { estadosD = nuevosEstados,
+             alfabetoD = alfabetoD afd,
+             transicionesD = nuevasTransiciones,
+             inicialD = nuevoInicial,
+             finalesD = nuevosFinales }
         
         
 -- <<< Función principal. Convierte un AFN a un AFD >>>
 aFN_to_AFD :: AFN -> AFD
 aFN_to_AFD afn =
-    -- Descubrimos todos los estados alcanzables.
+    -- Construcción por subconjuntos.
     let todosEstados = descubrirEstados afn
-        -- Calculamos el estado inicial.
         estadoInicial = snd (head todosEstados)
-        -- Calculamos todas las transiciones del AFD.
         transiciones = calcularTransiciones afn todosEstados
-        -- Calculamos los estados finales del AFD.
         estadosFinales = calcularFinales afn todosEstados
-        -- Obtenemos la lista final de nombres de estados.
         listaEstados = map snd todosEstados
         
-    -- Al final, ensamblamos todo.
-    in AFD { estadosD = listaEstados,
-             alfabetoD = alfabeto2 afn,
-             transicionesD = transiciones,
-             inicialD = estadoInicial,
-             finalesD = estadosFinales }
+        afdIntermedio = AFD { estadosD = listaEstados,
+                             alfabetoD = alfabeto2 afn,
+                             transicionesD = transiciones,
+                             inicialD = estadoInicial,
+                             finalesD = estadosFinales }
+
+    --  Completar el AFD.
+        afdCompleto = completarAFD afdIntermedio
+
+    -- Renombrar estados.
+        afdFinal = renombrarAFD afdCompleto
+        
+    in afdFinal

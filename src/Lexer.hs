@@ -7,7 +7,7 @@ import AFN
 import AFD
 import AFDmin
 import MDD hiding (Prioridad)
-import qualified Data.Map.Strict as Map
+import qualified Data.Map.Strict as Mapa
 
 type GramaticaLexica = [(Categoria, Prioridad, Expr)]
 type Prioridad = Int
@@ -29,7 +29,7 @@ construirMDDIndividual categoria expr =
       afn     = aFNEp_to_AFN afnEps
       afd     = aFN_to_AFD afn
       afdMin  = minimizaAFD afd
-      muSimple = Map.fromList [ (estadoFinal, categoria) | estadoFinal <- finalesD afdMin ]
+      muSimple = Mapa.fromList [ (estadoFinal, categoria) | estadoFinal <- finalesD afdMin ]
   in MDD afdMin muSimple
 
 construirListaMDDs :: GramaticaLexica -> [MDDInfo]
